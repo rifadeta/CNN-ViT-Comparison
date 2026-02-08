@@ -51,28 +51,34 @@ if uploaded_file is not None:
     img_array = img_array / 255.0
     img_array = np.expand_dims(img_array, axis=0)
 
-    # --- PREDIKSI ---
-    preds = model.predict(img_array)
+   # --- PREDIKSI ---
+preds = model.predict(img_array)
 
-    if isinstance(preds, dict):
-        prediction = list(preds.values())[0][0]
-    else:
-        prediction = preds[0]
+if isinstance(preds, dict):
+    prediction = list(preds.values())[0][0]
+else:
+    prediction = preds[0]
 
-    result_index = np.argmax(prediction)
-    confidence = np.max(prediction) * 100
+# Ambil confidence dan gap
+sorted_probs = np.sort(prediction)[::-1]
+confidence = sorted_probs[0] * 100
+gap = (sorted_probs[0] - sorted_probs[1]) * 100
 
-    # --- LOGIKA THRESHOLD ---
-    if confidence < CONFIDENCE_THRESHOLD:
-        st.warning("⚠️ Gambar tidak dapat diidentifikasi sebagai daun selada.")
-        st.write(f"Tingkat keyakinan tertinggi: **{confidence:.2f}%**")
-    else:
-        st.success(f"Model digunakan: {selected_model_name}")
-        st.subheader(f"Hasil Prediksi: **{class_names[result_index]}**")
-        st.progress(int(confidence))
-        st.write(f"Tingkat Keyakinan: **{confidence:.2f}%**")
+result_index = np.argmax(prediction)
 
-    st.caption(
-        "Catatan: Sistem hanya dirancang untuk mengklasifikasikan citra daun selada "
-        "ke dalam tiga kelas (bacterial, fungal, healthy)."
-    )
+# --- LOGIKA KEPUTUSAN ---
+st.subheader("Hasil Prediksi")
+
+if confidence < 70:
+    st.warning("⚠️ Sistem tidak dapat menentukan kondisi daun dengan tingkat keyakinan yang cukup.")
+    st.write(f"Tingkat Keyakinan: {confidence:.2f}%")
+
+elif confidence >= 70 and gap < 15:
+    st.error("❌ Objek terdeteksi bukan daun selada atau berada di luar domain sistem.")
+    st.write(f"Tingkat Keyakinan Tertinggi: {confidence:.2f}%")
+    st.write(f"Selisih Probabilitas (Gap): {gap:.2f}%")
+
+else:
+    st.success(f"Hasil Prediksi: **{class_names[result_index]}**")
+    st.progress(int(confidence))
+    st.write(f"Tingkat Keyakinan: **{confidence:.2f}%**")
