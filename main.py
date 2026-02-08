@@ -9,9 +9,7 @@ st.set_page_config(page_title="Lettuce Disease Classifier", layout="centered")
 st.title("🥬 Klasifikasi Penyakit Daun Selada")
 st.write("Unggah foto daun selada untuk mendeteksi apakah sehat atau terkena penyakit.")
 
-CONFIDENCE_THRESHOLD = 70.0  # ambang batas keyakinan
-
-# --- LOAD MODEL ---
+# --- LOAD MODEL (DI-CACHE AGAR CEPAT) ---
 @st.cache_resource
 def load_prediction_model(model_name):
     path = "cnn_model" if model_name == "CNN Model" else "vit_model"
@@ -29,18 +27,15 @@ selected_model_name = st.sidebar.selectbox(
 
 model = load_prediction_model(selected_model_name)
 
-# --- KELAS ---
+# --- DAFTAR KELAS ---
 class_names = ['Bacterial', 'Fungal', 'Healthy']
 
 # --- UPLOAD GAMBAR ---
-uploaded_file = st.file_uploader(
-    "Pilih gambar daun...",
-    type=["jpg", "jpeg", "png"]
-)
+uploaded_file = st.file_uploader("Pilih gambar daun...", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
-    image = Image.open(uploaded_file).convert("RGB")
-    st.image(image, caption="Gambar yang diunggah", use_container_width=True)
+    image = Image.open(uploaded_file)
+    st.image(image, caption='Gambar yang diunggah', use_container_width=True)
 
     st.write("---")
     st.write(f"**Prediksi menggunakan: {selected_model_name}**")
@@ -51,34 +46,33 @@ if uploaded_file is not None:
     img_array = img_array / 255.0
     img_array = np.expand_dims(img_array, axis=0)
 
-   # --- PREDIKSI ---
-preds = model.predict(img_array)
+    # --- PREDIKSI ---
+    preds = model.predict(img_array)
 
-if isinstance(preds, dict):
-    prediction = list(preds.values())[0][0]
-else:
-    prediction = preds[0]
+    if isinstance(preds, dict):
+        prediction = list(preds.values())[0][0]
+    else:
+        prediction = preds[0]
 
-# Ambil confidence dan gap
-sorted_probs = np.sort(prediction)[::-1]
-confidence = sorted_probs[0] * 100
-gap = (sorted_probs[0] - sorted_probs[1]) * 100
+    # --- HITUNG CONFIDENCE & GAP ---
+    sorted_probs = np.sort(prediction)[::-1]
+    confidence = sorted_probs[0] * 100
+    gap = (sorted_probs[0] - sorted_probs[1]) * 100
+    result_index = np.argmax(prediction)
 
-result_index = np.argmax(prediction)
+    # --- LOGIKA KEPUTUSAN (OPSI 2) ---
+    st.subheader("Hasil Prediksi")
 
-# --- LOGIKA KEPUTUSAN ---
-st.subheader("Hasil Prediksi")
+    if confidence < 70:
+        st.warning("⚠️ Sistem tidak dapat menentukan kondisi daun dengan tingkat keyakinan yang cukup.")
+        st.write(f"Tingkat Keyakinan: {confidence:.2f}%")
 
-if confidence < 70:
-    st.warning("⚠️ Sistem tidak dapat menentukan kondisi daun dengan tingkat keyakinan yang cukup.")
-    st.write(f"Tingkat Keyakinan: {confidence:.2f}%")
+    elif confidence >= 70 and gap < 15:
+        st.error("❌ Objek terdeteksi bukan daun selada atau berada di luar domain sistem.")
+        st.write(f"Tingkat Keyakinan Tertinggi: {confidence:.2f}%")
+        st.write(f"Selisih Probabilitas (Gap): {gap:.2f}%")
 
-elif confidence >= 70 and gap < 15:
-    st.error("❌ Objek terdeteksi bukan daun selada atau berada di luar domain sistem.")
-    st.write(f"Tingkat Keyakinan Tertinggi: {confidence:.2f}%")
-    st.write(f"Selisih Probabilitas (Gap): {gap:.2f}%")
-
-else:
-    st.success(f"Hasil Prediksi: **{class_names[result_index]}**")
-    st.progress(int(confidence))
-    st.write(f"Tingkat Keyakinan: **{confidence:.2f}%**")
+    else:
+        st.success(f"Hasil Prediksi: **{class_names[result_index]}**")
+        st.progress(int(confidence))
+        st.write(f"Tingkat Keyakinan: **{confidence:.2f}%**")
