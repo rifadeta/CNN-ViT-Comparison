@@ -63,7 +63,7 @@ if uploaded_file is not None:
     st.write(f"Tingkat Keyakinan: **{confidence:.2f}%**")
 
     # --- CATATAN TAMBAHAN ---
-    st.info(
-    "ℹ️ **Catatan:** Hasil prediksi berlaku untuk citra daun selada. "
+    st.caption(
+    "**Catatan:** Hasil prediksi berlaku untuk citra daun selada. "
     "Penggunaan pada objek lain dapat menghasilkan prediksi yang tidak akurat."
 )
