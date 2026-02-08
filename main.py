@@ -18,7 +18,7 @@ def load_prediction_model(model_name):
     ])
     return model
 
-# --- SIDEBAR ---
+# --- SIDEBAR: PILIH MODEL ---
 st.sidebar.header("Pengaturan Model")
 selected_model_name = st.sidebar.selectbox(
     "Pilih Arsitektur Model:",
@@ -30,7 +30,7 @@ model = load_prediction_model(selected_model_name)
 # --- DAFTAR KELAS ---
 class_names = ['Bacterial', 'Fungal', 'Healthy']
 
-# --- UPLOAD GAMBAR ---
+# --- UI UPLOAD GAMBAR ---
 uploaded_file = st.file_uploader("Pilih gambar daun...", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
@@ -54,25 +54,16 @@ if uploaded_file is not None:
     else:
         prediction = preds[0]
 
-    # --- HITUNG CONFIDENCE & GAP ---
-    sorted_probs = np.sort(prediction)[::-1]
-    confidence = sorted_probs[0] * 100
-    gap = (sorted_probs[0] - sorted_probs[1]) * 100
     result_index = np.argmax(prediction)
+    confidence = np.max(prediction) * 100
 
-    # --- LOGIKA KEPUTUSAN (OPSI 2) ---
-    st.subheader("Hasil Prediksi")
+    # --- TAMPILKAN HASIL ---
+    st.subheader(f"Hasil Prediksi: **{class_names[result_index]}**")
+    st.progress(int(confidence))
+    st.write(f"Tingkat Keyakinan: **{confidence:.2f}%**")
 
-    if confidence < 70:
-        st.warning("⚠️ Sistem tidak dapat menentukan kondisi daun dengan tingkat keyakinan yang cukup.")
-        st.write(f"Tingkat Keyakinan: {confidence:.2f}%")
-
-    elif confidence >= 70 and gap < 15:
-        st.error("❌ Objek terdeteksi bukan daun selada atau berada di luar domain sistem.")
-        st.write(f"Tingkat Keyakinan Tertinggi: {confidence:.2f}%")
-        st.write(f"Selisih Probabilitas (Gap): {gap:.2f}%")
-
-    else:
-        st.success(f"Hasil Prediksi: **{class_names[result_index]}**")
-        st.progress(int(confidence))
-        st.write(f"Tingkat Keyakinan: **{confidence:.2f}%**")
+    # --- CATATAN TAMBAHAN (INI YANG BARU) ---
+    st.info(
+    "ℹ️ **Catatan:** Hasil prediksi berlaku untuk citra daun selada. "
+    "Penggunaan pada objek lain dapat menghasilkan prediksi yang tidak akurat."
+)
