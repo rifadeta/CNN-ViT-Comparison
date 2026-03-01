@@ -6,7 +6,7 @@ from PIL import Image
 # --- KONFIGURASI HALAMAN ---
 st.set_page_config(page_title="Lettuce Disease Classifier", layout="centered")
 
-st.title("🥬 Klasifikasi Penyakit Daun Selada")
+st.title("🥬 Deteksi Penyakit Daun Selada")
 st.write("Unggah foto daun selada untuk mendeteksi apakah sehat atau terkena penyakit.")
 
 # --- LOAD MODEL (DI-CACHE AGAR CEPAT) ---
@@ -61,6 +61,12 @@ if uploaded_file is not None:
     st.subheader(f"Hasil Prediksi: **{class_names[result_index]}**")
     st.progress(int(confidence))
     st.write(f"Tingkat Keyakinan: **{confidence:.2f}%**")
+
+    # --- INTERPRETASI HASIL ---
+    if class_names[result_index] == "Healthy":
+        st.success("Selada masih dalam kondisi baik, segar, dan layak untuk dikonsumsi.")
+    else:
+        st.error("Selada telah mengalami penurunan kualitas dan kurang disarankan untuk dikonsumsi.")
 
     # --- CATATAN TAMBAHAN ---
     st.caption(

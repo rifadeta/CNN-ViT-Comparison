@@ -1,4 +1,4 @@
-# 🥬 Klasifikasi Penyakit Daun Selada
+# 🥬 Deteksi Penyakit Daun Selada
 
 Aplikasi web berbasis Streamlit untuk mendeteksi penyakit pada daun selada menggunakan model Deep Learning (CNN dan Vision Transformer).
 
